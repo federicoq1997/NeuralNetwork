@@ -15,9 +15,9 @@ Time:  30 minutes
 Equipment: Google Chrome Browser
 </pre>
 ### Overview
-This free tutorial is intended for anyone curious about building their own A.I. projects. In this tutorial, you will build a neural network from scratch and train it to make Lemonade sales predictions using a simple, synthetic dataset.   You will be introduced to PyTorch, a deep learning library managed by Meta's AI group, powering lots of A.I. applications around the world today. 
+This free tutorial is intended for anyone curious about building their own A.I. projects. In this tutorial, you will build a neural network from scratch and train it to make Item sales predictions using a simple, synthetic dataset.   You will be introduced to PyTorch, a deep learning library managed by Meta's AI group, powering lots of A.I. applications around the world today. 
 
-### Dataset – A Simple Lemonade Sales Synthetic Dataset
+### Dataset – A Simple Item Sales Synthetic Dataset
 We will be working on a synthetic dataset that catalogs the daily number of lemonades sold at a lemon stand. After training, your neural network will be able to predict the number of lemonades sold on any given day.
 
 ### How to Get Started
@@ -51,6 +51,7 @@ Let's start by importing the software libraries we will need to build our neural
 """
 
 # Import PyTorch libraries
+import os
 import torch
 from torch import nn
 
@@ -79,8 +80,8 @@ When training a neural network from scratch, you will usually need a lot of data
 # Use Pandas to do our dataprocessing on the dataset
 # Download the dataset
 import pandas as pd
-url = 'https://raw.githubusercontent.com/LeakyAI/FirstNeuralNet/main/lemons.csv'
-df = pd.read_csv(url)
+file = 'Esportazione_Articoli_1106_20221127_153540.csv'
+df = pd.read_csv(os.path.join(os.getcwd(), file))
 
 # Explore the first 10 rows of the dataset
 df.head(10)
@@ -92,37 +93,37 @@ df.shape
 
 The data has been collected in a table with the following columns:  
 
-<pre> Weekend Sunny Warm BigSign Price NumberSold</pre>
+<pre> Weekend Sunny Warm BigSign price qty</pre>
 
-While the dataset is more or less ready to be used, we have two fields (Price and NumberSold) that contain real values.  Usually, it's easier to train neural networks if the values used are in the range rough range of -1..1.  We will first reduce the range of Price and NumberSold down using standardization. 
+While the dataset is more or less ready to be used, we have two fields (price and qty) that contain real values.  Usually, it's easier to train neural networks if the values used are in the range rough range of -1..1.  We will first reduce the range of price and qty down using standardization. 
 """
 
 # Calculate the mean and standard deviation of price
 # Standardize numSold
-priceMean = df['Price'].mean()
-priceStd = df['Price'].std()
-df['Price'] = (df['Price']-priceMean)/priceStd
+priceMean = df['price'].mean()
+priceStd = df['price'].std()
+df['price'] = (df['price']-priceMean)/priceStd
 
 # Calculate the mean and standard deviation of numSold
 # Standardize numSold
-numSoldMean = df['NumberSold'].mean()
-numSoldStd = df['NumberSold'].std()
-df['NumberSold'] = (df['NumberSold']-numSoldMean)/numSoldStd
+numSoldMean = df['qty'].mean()
+numSoldStd = df['qty'].std()
+df['qty'] = (df['qty']-numSoldMean)/numSoldStd
 
 df.head()
 
 """### Create our Input (x) and Ouput (y) to Train our Neural Network
  
-Here you will create the input (x) and output (y) variables needed to train our network.  The number we want our neural network to predict is the field called 'NumberSold'.  This will be the output (y).  We will need to seperate out our input (Weekend, Sunny, Warm, BigSign, Price) from the ouput (NumberSold).
+Here you will create the input (x) and output (y) variables needed to train our network.  The number we want our neural network to predict is the field called 'qty'.  This will be the output (y).  We will need to seperate out our input (Weekend, Sunny, Warm, BigSign, price) from the ouput (qty).
 """
 
 # Create our PyTorch tensors and move to CPU or GPU if available
 # Extract the inputs and create a PyTorch tensor x (inputs)
-inputs = ['Weekend','Sunny','Warm','BigSign','Price']
+inputs = ['day1','day2','day3','day4','day5','day6','day7','price']
 x = torch.tensor(df[inputs].values, dtype=torch.float, device=device)
 
 # Extract the outputs and create a PyTorch tensor y (outputs)
-outputs = ['NumberSold']
+outputs = ['qty']
 y = torch.tensor(df[outputs].values,dtype=torch.float, device=device)
 
 # Explore the first 5 inputs
@@ -142,7 +143,7 @@ Below you will build a simply neural network that will take in the inputs above 
 # Activation Function:  Relu
 # Number of Ouputs: 1
 model = nn.Sequential(
-            nn.Linear(5,100),
+            nn.Linear(8,100),
             nn.ReLU(),
             nn.Linear(100,1)
         )
@@ -215,8 +216,8 @@ def graphPredictions(model, x, y , minValue, maxValue):
     
     # Plot actuals vs predictions
     plt.scatter(actual, predictions)
-    plt.xlabel('Actual Lemonades Sold')
-    plt.ylabel('Predicted Lemonades Sold')
+    plt.xlabel('Actual Item Sold')
+    plt.ylabel('Predicted Item Sold')
     plt.plot([minValue,maxValue], [minValue,maxValue]) 
     plt.xlim(minValue, maxValue)
     plt.ylim(minValue, maxValue)
@@ -247,15 +248,18 @@ def datasetGenerator(weekend, sunny, warm, bigsign, price):
     return numlemonssold
 
 # Data that affects the number of lemons sold in one day
-weekend = 1
-sunny = 0
-warm = 0    
-bigsign = 1
+day1 = 1
+day2 = 0
+day3 = 0
+day4 = 0
+day5 = 0
+day6 = 0
+day7 = 0
 price = 10
 
 # Calculate what would have been the actual result using
 # the synthetic dataset's algorithm
-actual = datasetGenerator(weekend, sunny, warm, bigsign, price) 
+actual = datasetGenerator(day1, day2, day3, day4, day5, day6, day7, price) 
 
 # Use the CPU as we just need to do a single pass
 model.to('cpu')
@@ -264,7 +268,7 @@ model.to('cpu')
 price = (price - priceMean)/priceStd
 
 # Create our input tensor
-x1 = torch.tensor([weekend, sunny, warm, bigsign, price],dtype=float)
+x1 = torch.tensor([day1, day2, day3, day4, day5, day6, day7, price],dtype=float)
 
 # Pass the input into the neural network
 y1 = model(x1.float())
